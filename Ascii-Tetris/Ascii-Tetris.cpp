@@ -29,7 +29,7 @@ class gameManager {
 
 
 
-		auto getElapsedTime(steady_clock::time_point endTime, steady_clock::time_point startTime) {
+		auto getElapsedTime(steady_clock::time_point startTime, steady_clock::time_point endTime) {
 			return duration_cast<milliseconds>(endTime - startTime).count();
 		}
 };
@@ -38,7 +38,8 @@ class boardManager {
 
 public:
 
-	COORD piecePosition = { 0, 0 };
+
+	COORD piecePosition = { 6, 2 };
 	COORD pieceStartingCoords = { 6, 2 };
 	// Board dimensions (add 2 more for board walls)
 	static const int boardWidth = 12;
@@ -49,7 +50,7 @@ public:
 
 
 
-	bool pieceCollided = true;
+	bool pieceCollided = false;
 
 	//         z  y  z
 	int pieces[7][5][5]{
@@ -119,7 +120,7 @@ public:
 		{ 0, 0, 0, 0, 0 },
 	};
 
-	static const enum pixelType {
+	static enum pixelType {
 		empty = 0,
 		piece = 1,
 		staticPiece = 2,
@@ -141,10 +142,9 @@ public:
 
 	//Piece Functions
 	void createPiece() {
-		pieceCollided = false;
-		gameboard[pieceStartingCoords.Y][pieceStartingCoords.X] = pixelType::piece;
 		piecePosition = pieceStartingCoords;
 		randomizeCurrentPiece();
+		buildPiece();
 	}
 
 	void moveDownPiece() {
@@ -159,19 +159,16 @@ public:
 
 	void moveLeftPiece() {
 		if (gameboard[piecePosition.Y][piecePosition.X - 1] == 0) {
-
-			gameboard[piecePosition.Y][piecePosition.X] = pixelType::empty;
 			piecePosition.X = piecePosition.X - 1;
-			gameboard[piecePosition.Y][piecePosition.X] = pixelType::piece;
 		}
 
 	}
 
 	void randomizeCurrentPiece() {
-		srand(time(0));
-		int randomInt = rand() % 8;
-		for (int x = 0; x < 5; ++x) {
-			for (int y = 0; y < 5; ++y) {
+		srand(static_cast<unsigned int>(time(0)));
+		int randomInt = rand() % 7;
+		for (int y = 0; y < 5; ++y) {
+			for (int x = 0; x < 5; ++x) {
 				currentPiece[y][x] = pieces[randomInt][y][x];
 			}
 		}
@@ -185,16 +182,16 @@ public:
 				if (currentPiece[y][x] == 1) {
 					offsetX = x - 3;
 					offsetY = y - 3;
-					if (pieceCollided == false) {
-						gameboard[offsetY + piecePosition.Y][offsetX + piecePosition.X] = pixelType::piece;
-					}
-					else {
+					if (pieceCollided == true) {
 						gameboard[offsetY + piecePosition.Y][offsetX + piecePosition.X] = pixelType::staticPiece;
 					}
+					else {
+						gameboard[offsetY + piecePosition.Y][offsetX + piecePosition.X] = pixelType::piece;
+						
+					}
 				}
-				cout << currentPiece[y][x] << " ";
 			};
-			cout << "\n";
+
 		}
 	};
 
@@ -206,17 +203,45 @@ public:
 			}
 		}
 	}
+
+	bool checkForDown() {
+		bool allUnderEmpty = 1;
+		int offsetX = 0;
+		int offsetY = 0;
+		for (int x = 0; x < 5; ++x) {
+			for (int y = 0; y < 5; ++y) {
+				if(currentPiece[y][x] == 1)
+				{
+					offsetX = x - 3;
+					offsetY = y - 3;
+					auto checkTile = gameboard[offsetY + piecePosition.Y + 1][offsetX + piecePosition.X];
+					if (checkTile == pixelType::wall || checkTile == pixelType::staticPiece) {
+						allUnderEmpty = false;
+						break;
+					}
+				}
+				
+			}
+		}
+		return allUnderEmpty;
+	}
 };
 
 
 void update(int frameCount, boardManager& boardManager) {
-	if (frameCount % 2 == 0) {
-		if(boardManager.gameboard[boardManager.piecePosition.Y + 1][boardManager.piecePosition.X] == boardManager::pixelType::empty){
+	auto piececheck = boardManager.gameboard[boardManager.piecePosition.Y + 1][boardManager.piecePosition.X];
+	cout << boardManager.checkForDown();
+	if (frameCount % 10 == 0) {
+		if(boardManager.checkForDown()){
 			boardManager.moveDownPiece();
+			boardManager.boardClear();
+			boardManager.buildPiece();
 		}
 		else {
 			boardManager.pieceCollided = true;
+			boardManager.boardClear();
 			boardManager.buildPiece();
+			boardManager.pieceCollided = false;
 			boardManager.createPiece();
 		}
 	}
@@ -272,8 +297,7 @@ int main() {
 	string boardString = "";
 	gameManager gameManager;
 	boardManager boardManager;
-	//render(boardManager, gameManager, boardString);
-	
+	boardManager.createPiece();
 	while (gameManager.running)
 	{
 		++frameCounter;
@@ -282,10 +306,8 @@ int main() {
 		const auto startTime = steady_clock::now();
 
 		//Game loop
-		update(frameCounter, boardManager);
 		playerInput(boardManager);
-		boardManager.boardClear();
-		boardManager.buildPiece();
+		update(frameCounter, boardManager);
 		render(boardManager, gameManager,boardString);
 
 		//Ends Clock and handles FPS
