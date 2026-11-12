@@ -12,10 +12,14 @@ using namespace std::chrono;
 
 class gameManager {
 	public:
+		// True if game loop is running
 		bool running = true;
+
+		// Frames per second (target)
 		static const int targetFPS = 60;
 		static const int targetFrameTime = 1000 / targetFPS; // in milliseconds
 
+		//Honestly no idea
 		HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 		
 		
@@ -28,7 +32,6 @@ class gameManager {
 		}
 
 
-
 		auto getElapsedTime(steady_clock::time_point startTime, steady_clock::time_point endTime) {
 			return duration_cast<milliseconds>(endTime - startTime).count();
 		}
@@ -38,9 +41,10 @@ class boardManager {
 
 public:
 
-
+	// Current position of middle pixel of piece
 	COORD piecePosition = { 6, 2 };
 	COORD pieceStartingCoords = { 6, 2 };
+
 	// Board dimensions (add 2 more for board walls)
 	static const int boardWidth = 12;
 	static const int boardHeight = 22;
@@ -48,10 +52,9 @@ public:
 	// Gameboard declaration (X and Y flipped)
 	int gameboard[boardHeight][boardWidth]{};
 
-
-
 	bool pieceCollided = false;
 
+	// 3D array containing all tetronimo types
 	//         z  y  z
 	int pieces[7][5][5]{
 		{
@@ -112,6 +115,7 @@ public:
 		}
 	};
 
+	// Current piece type eg. I, T, O
 	int currentPiece[5][5] = {
 		{ 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0 },
@@ -120,7 +124,8 @@ public:
 		{ 0, 0, 0, 0, 0 },
 	};
 
-	static enum pixelType {
+	// Stores all pixel types of the board
+	enum pixelType {
 		empty = 0,
 		piece = 1,
 		staticPiece = 2,
@@ -140,30 +145,22 @@ public:
 		}
 	}
 
-	//Piece Functions
+	// Piece Functions
 	void createPiece() {
 		piecePosition = pieceStartingCoords;
 		randomizeCurrentPiece();
 		buildPiece();
 	}
 
-	void moveDownPiece() {
-		piecePosition.Y = piecePosition.Y + 1;
-	}
-
-	void moveRightPiece() {
-		if (gameboard[piecePosition.Y][piecePosition.X + 1] == 0) {
-			piecePosition.X = piecePosition.X + 1;
+	// Checks move is valid then moves piece
+	void movePiece(int dirX, int dirY) {
+		if (checkValidMove(dirX, dirY)) {
+			piecePosition.X = piecePosition.X + dirX;
+			piecePosition.Y = piecePosition.Y + dirY;
 		}
 	}
 
-	void moveLeftPiece() {
-		if (gameboard[piecePosition.Y][piecePosition.X - 1] == 0) {
-			piecePosition.X = piecePosition.X - 1;
-		}
-
-	}
-
+	// Generates a random piece and sets current piece array to the type of piece
 	void randomizeCurrentPiece() {
 		srand(static_cast<unsigned int>(time(0)));
 		int randomInt = rand() % 7;
@@ -174,11 +171,22 @@ public:
 		}
 	}
 
+	// Clears non static piece pixels
 	void buildPiece() {
 		int offsetX = 0;
 		int offsetY = 0;
+
+		//Clears board
+		for (int y = 0; y < boardHeight; y++) {
+			for (int x = 0; x < boardWidth; x++) {
+				if (gameboard[y][x] == pixelType::piece)
+					gameboard[y][x] = pixelType::empty;
+			}
+		}
+		//Builds piece
 		for (int x = 0; x < 5; ++x) {
 			for (int y = 0; y < 5; ++y) {
+
 				if (currentPiece[y][x] == 1) {
 					offsetX = x - 3;
 					offsetY = y - 3;
@@ -195,57 +203,46 @@ public:
 		}
 	};
 
-	void boardClear() {
-		for (int y = 0; y < boardHeight; y++) {
-			for (int x = 0; x < boardWidth; x++) {
-				if (gameboard[y][x] == pixelType::piece)
-					gameboard[y][x] = pixelType::empty;
-			}
-		}
-	}
-
-	bool checkForDown() {
-		bool allUnderEmpty = 1;
-		int offsetX = 0;
-		int offsetY = 0;
+	// Checks if current piece position + the offset is free (returns true if free)
+	bool checkValidMove(int checkOffsetX, int checkOffsetY) {
+		bool allCheckedEmpty = 1;
+		int pieceOffsetX = 0;
+		int pieceOffsetY = 0;
 		for (int x = 0; x < 5; ++x) {
 			for (int y = 0; y < 5; ++y) {
-				if(currentPiece[y][x] == 1)
-				{
-					offsetX = x - 3;
-					offsetY = y - 3;
-					auto checkTile = gameboard[offsetY + piecePosition.Y + 1][offsetX + piecePosition.X];
+				if(currentPiece[y][x] == 1){
+					pieceOffsetX = x - 3;
+					pieceOffsetY = y - 3;
+					auto checkTile = gameboard[pieceOffsetY + piecePosition.Y + checkOffsetY][pieceOffsetX + piecePosition.X + checkOffsetX];
 					if (checkTile == pixelType::wall || checkTile == pixelType::staticPiece) {
-						allUnderEmpty = false;
+						allCheckedEmpty = false;
 						break;
 					}
 				}
 				
 			}
 		}
-		return allUnderEmpty;
+		return allCheckedEmpty;
 	}
 };
 
 
 void update(int frameCount, boardManager& boardManager) {
-	auto piececheck = boardManager.gameboard[boardManager.piecePosition.Y + 1][boardManager.piecePosition.X];
-	cout << boardManager.checkForDown();
-	if (frameCount % 10 == 0) {
-		if(boardManager.checkForDown()){
-			boardManager.moveDownPiece();
-			boardManager.boardClear();
+	if (frameCount % 5 == 0) {
+		if(boardManager.checkValidMove(0,1)){
+			boardManager.movePiece(0,1);
 			boardManager.buildPiece();
 		}
 		else {
 			boardManager.pieceCollided = true;
-			boardManager.boardClear();
 			boardManager.buildPiece();
 			boardManager.pieceCollided = false;
 			boardManager.createPiece();
 		}
 	}
-
+	else {
+		boardManager.buildPiece();
+	}
 }
 
 void playerInput(boardManager& boardManager) {
@@ -253,10 +250,10 @@ void playerInput(boardManager& boardManager) {
 		char key = _getch();
 		switch (key) {
 			case 'd':
-				boardManager.moveRightPiece();
+				boardManager.movePiece(1,0);
 				break;
 			case 'a':
-				boardManager.moveLeftPiece();
+				boardManager.movePiece(-1,0);
 				break;
 			default:
 				break;
@@ -264,6 +261,7 @@ void playerInput(boardManager& boardManager) {
 	}
 }
 
+// Renders gameboard
 void render(boardManager boardManager, gameManager gameManager, string boardString) {
 	SetConsoleCursorPosition(gameManager.consoleHandle, { 0, 0 });
 	boardString = "";
@@ -297,6 +295,7 @@ int main() {
 	string boardString = "";
 	gameManager gameManager;
 	boardManager boardManager;
+
 	boardManager.createPiece();
 	while (gameManager.running)
 	{
@@ -306,8 +305,9 @@ int main() {
 		const auto startTime = steady_clock::now();
 
 		//Game loop
-		playerInput(boardManager);
+
 		update(frameCounter, boardManager);
+		playerInput(boardManager);
 		render(boardManager, gameManager,boardString);
 
 		//Ends Clock and handles FPS
