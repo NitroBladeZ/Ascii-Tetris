@@ -22,6 +22,7 @@ class gameManager {
 		//Honestly no idea
 		HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 		
+		int score;
 		
 		gameManager() {
 
@@ -176,11 +177,16 @@ public:
 		int offsetX = 0;
 		int offsetY = 0;
 
+		int lineCheck = 0;
+		
 		//Clears board
 		for (int y = 0; y < boardHeight; y++) {
+			lineCheck = 0;
 			for (int x = 0; x < boardWidth; x++) {
-				if (gameboard[y][x] == pixelType::piece)
+				if (gameboard[y][x] == pixelType::piece){
 					gameboard[y][x] = pixelType::empty;
+				}
+				lineCheck += gameboard[y][x];
 			}
 		}
 		//Builds piece
@@ -210,7 +216,7 @@ public:
 		int pieceOffsetY = 0;
 		for (int x = 0; x < 5; ++x) {
 			for (int y = 0; y < 5; ++y) {
-				if(currentPiece[y][x] == 1){
+				if (currentPiece[y][x] == 1) {
 					pieceOffsetX = x - 3;
 					pieceOffsetY = y - 3;
 					auto checkTile = gameboard[pieceOffsetY + piecePosition.Y + checkOffsetY][pieceOffsetX + piecePosition.X + checkOffsetX];
@@ -227,7 +233,7 @@ public:
 };
 
 
-void update(int frameCount, boardManager& boardManager) {
+void update(int frameCount, boardManager& boardManager, gameManager& gameManager) {
 	if (frameCount % 5 == 0) {
 		if(boardManager.checkValidMove(0,1)){
 			boardManager.movePiece(0,1);
@@ -238,6 +244,7 @@ void update(int frameCount, boardManager& boardManager) {
 			boardManager.buildPiece();
 			boardManager.pieceCollided = false;
 			boardManager.createPiece();
+			gameManager.score++;
 		}
 	}
 	else {
@@ -288,6 +295,8 @@ void render(boardManager boardManager, gameManager gameManager, string boardStri
 		boardString = boardString + "\n";
 	}
 	cout << boardString;
+	cout << "Score: " << gameManager.score;
+
 }
 
 int main() {
@@ -295,6 +304,9 @@ int main() {
 	string boardString = "";
 	gameManager gameManager;
 	boardManager boardManager;
+
+	gameManager.score = 0;
+
 
 	boardManager.createPiece();
 	while (gameManager.running)
@@ -306,7 +318,7 @@ int main() {
 
 		//Game loop
 
-		update(frameCounter, boardManager);
+		update(frameCounter, boardManager, gameManager);
 		playerInput(boardManager);
 		render(boardManager, gameManager,boardString);
 
