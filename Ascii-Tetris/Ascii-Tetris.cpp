@@ -15,6 +15,8 @@ class gameManager {
 		// True if game loop is running
 		bool running = true;
 
+		int spawnFrame = 10;
+
 		// Frames per second (target)
 		static const int targetFPS = 60;
 		static const int targetFrameTime = 1000 / targetFPS; // in milliseconds
@@ -41,6 +43,8 @@ class gameManager {
 class boardManager {
 
 public:
+
+	int lineCheck = 0;
 
 	// Current position of middle pixel of piece
 	COORD piecePosition = { 6, 2 };
@@ -124,6 +128,13 @@ public:
 		{ 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0 },
 	};
+	int rotationContainer[5][5] = {
+		{ 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0 },
+	};
 
 	// Stores all pixel types of the board
 	enum pixelType {
@@ -147,10 +158,10 @@ public:
 	}
 
 	// Piece Functions
-	void createPiece() {
+	void createPiece(gameManager gameManager) {
 		piecePosition = pieceStartingCoords;
 		randomizeCurrentPiece();
-		buildPiece();
+		buildPiece(gameManager);
 	}
 
 	// Checks move is valid then moves piece
@@ -173,22 +184,23 @@ public:
 	}
 
 	// Clears non static piece pixels
-	void buildPiece() {
+	void buildPiece(gameManager& gameManager) {
 		int offsetX = 0;
 		int offsetY = 0;
-
-		int lineCheck = 0;
 		
+
+
 		//Clears board
 		for (int y = 0; y < boardHeight; y++) {
-			lineCheck = 0;
 			for (int x = 0; x < boardWidth; x++) {
 				if (gameboard[y][x] == pixelType::piece){
 					gameboard[y][x] = pixelType::empty;
 				}
-				lineCheck += gameboard[y][x];
 			}
 		}
+		
+
+
 		//Builds piece
 		for (int x = 0; x < 5; ++x) {
 			for (int y = 0; y < 5; ++y) {
@@ -207,6 +219,7 @@ public:
 			};
 
 		}
+		fullLine(gameManager);
 	};
 
 	// Checks if current piece position + the offset is free (returns true if free)
@@ -230,37 +243,85 @@ public:
 		}
 		return allCheckedEmpty;
 	}
+
+	void fullLine(gameManager& gameManager) {
+		for (int y = 1; y < boardHeight - 1; ++y) {
+			bool full = true;
+
+			for (int x = 1; x < boardWidth - 1; ++x) {
+				if (gameboard[y][x] != pixelType::staticPiece) {
+					full = false;
+					break;
+				}
+			}
+			
+			
+			if (full){
+				gameManager.score = gameManager.score + 10;
+				for (int x = 1; x < boardWidth - 1; ++x) {
+					gameboard[y][x] = 0;
+				}
+				for (int moveY = y - 1; moveY > 0; moveY--) {
+					for (int x = 1; x < boardWidth -1; ++x) {
+						if (gameboard[moveY][x] == pixelType::staticPiece) {
+							gameboard[moveY][x] = pixelType::empty;
+							gameboard[moveY + 1][x] = pixelType::staticPiece;
+						}
+					}
+				}
+			}
+		}
+		
+	}
+
+	void rotate() {
+		for (int y = 0; y < 5; y++) {
+			for (int x = 0; x < 5; x++) {
+				rotationContainer[x][4 - y] = currentPiece[y][x];
+			}
+		}
+		for (int y = 0; y < 5; y++) {
+			for (int x = 0; x < 5; x++) {
+				currentPiece[y][x] = rotationContainer[y][x];
+			}
+		}
+	}
 };
 
 
 void update(int frameCount, boardManager& boardManager, gameManager& gameManager) {
-	if (frameCount % 5 == 0) {
+	if (frameCount % gameManager.spawnFrame == 0) {
 		if(boardManager.checkValidMove(0,1)){
 			boardManager.movePiece(0,1);
-			boardManager.buildPiece();
+			boardManager.buildPiece(gameManager);
 		}
 		else {
 			boardManager.pieceCollided = true;
-			boardManager.buildPiece();
+			boardManager.buildPiece(gameManager);
 			boardManager.pieceCollided = false;
-			boardManager.createPiece();
+			boardManager.createPiece(gameManager);
 			gameManager.score++;
 		}
 	}
 	else {
-		boardManager.buildPiece();
+		boardManager.buildPiece(gameManager);
 	}
+
 }
 
-void playerInput(boardManager& boardManager) {
+void playerInput(boardManager& boardManager, gameManager& gameManager) {
 	if (_kbhit()) {
 		char key = _getch();
+		
 		switch (key) {
 			case 'd':
 				boardManager.movePiece(1,0);
 				break;
 			case 'a':
 				boardManager.movePiece(-1,0);
+				break;
+			case'w':
+				boardManager.rotate();
 				break;
 			default:
 				break;
@@ -286,7 +347,7 @@ void render(boardManager boardManager, gameManager gameManager, string boardStri
 				boardString = boardString + "O" + " ";
 				break;
 			case boardManager::pixelType::staticPiece:
-				boardString = boardString + "O" + " ";
+				boardString = boardString + "@" + " ";
 				break;
 			default:
 				break;
@@ -308,7 +369,7 @@ int main() {
 	gameManager.score = 0;
 
 
-	boardManager.createPiece();
+	boardManager.createPiece(gameManager);
 	while (gameManager.running)
 	{
 		++frameCounter;
@@ -318,8 +379,8 @@ int main() {
 
 		//Game loop
 
+		playerInput(boardManager, gameManager);
 		update(frameCounter, boardManager, gameManager);
-		playerInput(boardManager);
 		render(boardManager, gameManager,boardString);
 
 		//Ends Clock and handles FPS
