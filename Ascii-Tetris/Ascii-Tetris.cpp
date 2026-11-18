@@ -10,6 +10,9 @@ using namespace std;
 using namespace std::chrono;
 
 
+
+                                                 
+
 class gameManager {
 	public:
 		// True if game loop is running
@@ -38,6 +41,9 @@ class gameManager {
 		auto getElapsedTime(steady_clock::time_point startTime, steady_clock::time_point endTime) {
 			return duration_cast<milliseconds>(endTime - startTime).count();
 		}
+
+		bool endScreen;
+		bool startScreen;
 };
 	
 class boardManager {
@@ -331,7 +337,7 @@ void playerInput(boardManager& boardManager, gameManager& gameManager) {
 
 // Renders gameboard
 void render(boardManager boardManager, gameManager gameManager, string boardString) {
-	SetConsoleCursorPosition(gameManager.consoleHandle, { 0, 0 });
+	SetConsoleCursorPosition(gameManager.consoleHandle, { 22, 7 });
 	boardString = "";
 	for (int row = 0; row < boardManager.boardHeight; row++) {
 		for (int collumn = 0; collumn < boardManager.boardWidth; collumn++) {
@@ -353,12 +359,13 @@ void render(boardManager boardManager, gameManager gameManager, string boardStri
 				break;
 			}
 		}
-		boardString = boardString + "\n";
+		boardString = boardString + "\n" + "                      ";
 	}
 	cout << boardString;
-	cout << "Score: " << gameManager.score;
+	cout << "        Score: " << gameManager.score;
 
 }
+
 
 int main() {
 	int frameCounter = 0;
@@ -368,7 +375,14 @@ int main() {
 
 	gameManager.score = 0;
 
-
+	cout <<
+		R"(  
+	     _             _ _   _____    _        _      
+	    / \   ___  ___(_|_) |_   _|__| |_ _ __(_)___  
+	   / _ \ / __|/ __| | |   | |/ _ \ __| !__| / __| 
+	  / ___ \\__ \ (__| | |   | |  __/ |_| |  | \__ \ 
+	 /_/   \_\___/\___|_|_|   |_|\___|\__|_|  |_|___/ )";
+	
 	boardManager.createPiece(gameManager);
 	while (gameManager.running)
 	{
