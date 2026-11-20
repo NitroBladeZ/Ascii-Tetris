@@ -5,45 +5,47 @@
 #include <windows.h>
 #include <conio.h>
 #include <random>
+#include "TimeUtils.h"
 
 using namespace std;
 using namespace std::chrono;
 
-
-
                                                  
 
 class gameManager {
-	public:
-		// True if game loop is running
-		bool running = true;
+public:
+	// True if game loop is running
+	bool running = true;
 
-		int spawnFrame = 10;
+	int spawnFrame = 5;
 
-		// Frames per second (target)
-		static const int targetFPS = 60;
-		static const int targetFrameTime = 1000 / targetFPS; // in milliseconds
+	// Frames per second (target)
+	static const int targetFPS = 60;
+	static const int targetFrameTime = 1000 / targetFPS; // in milliseconds
 
-		//Honestly no idea
-		HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-		
-		int score;
-		
-		gameManager() {
+	// Honestly no idea
+	HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 
-			CONSOLE_CURSOR_INFO cursorInfo;
-			cursorInfo.dwSize = 1;
-			cursorInfo.bVisible = FALSE;
-			SetConsoleCursorInfo(consoleHandle, &cursorInfo);
-		}
+	int score;
 
 
-		auto getElapsedTime(steady_clock::time_point startTime, steady_clock::time_point endTime) {
-			return duration_cast<milliseconds>(endTime - startTime).count();
-		}
+	auto getElapsedTime(steady_clock::time_point startTime, steady_clock::time_point endTime) {
+		return duration_cast<milliseconds>(endTime - startTime).count();
+	}
 
-		bool endScreen;
-		bool startScreen;
+	bool endScreen;
+	bool startScreen;
+	void displayGameTitle() {
+		cout <<
+			R"(  
+	     _             _ _   _____    _        _      
+	    / \   ___  ___(_|_) |_   _|__| |_ _ __(_)___  
+	   / _ \ / __|/ __| | |   | |/ _ \ __| !__| / __| 
+	  / ___ \\__ \ (__| | |   | |  __/ |_| |  | \__ \ 
+	 /_/   \_\___/\___|_|_|   |_|\___|\__|_|  |_|___/ )";
+	}
+
+
 };
 	
 class boardManager {
@@ -353,7 +355,7 @@ void render(boardManager boardManager, gameManager gameManager, string boardStri
 				boardString = boardString + "O" + " ";
 				break;
 			case boardManager::pixelType::staticPiece:
-				boardString = boardString + "@" + " ";
+				boardString = boardString + "0" + " ";
 				break;
 			default:
 				break;
@@ -366,24 +368,22 @@ void render(boardManager boardManager, gameManager gameManager, string boardStri
 
 }
 
-
-int main() {
+void startGame() {
 	int frameCounter = 0;
 	string boardString = "";
 	gameManager gameManager;
 	boardManager boardManager;
 
 	gameManager.score = 0;
+	gameManager.displayGameTitle();
 
-	cout <<
-		R"(  
-	     _             _ _   _____    _        _      
-	    / \   ___  ___(_|_) |_   _|__| |_ _ __(_)___  
-	   / _ \ / __|/ __| | |   | |/ _ \ __| !__| / __| 
-	  / ___ \\__ \ (__| | |   | |  __/ |_| |  | \__ \ 
-	 /_/   \_\___/\___|_|_|   |_|\___|\__|_|  |_|___/ )";
-	
 	boardManager.createPiece(gameManager);
+
+	CONSOLE_CURSOR_INFO cursorInfo;
+	cursorInfo.dwSize = 1;
+	cursorInfo.bVisible = FALSE;
+	SetConsoleCursorInfo(gameManager.consoleHandle, &cursorInfo);
+
 	while (gameManager.running)
 	{
 		++frameCounter;
@@ -391,16 +391,57 @@ int main() {
 		//Starts Clock
 		const auto startTime = steady_clock::now();
 
-		//Game loop
 
+		//Game loop
 		playerInput(boardManager, gameManager);
 		update(frameCounter, boardManager, gameManager);
-		render(boardManager, gameManager,boardString);
+		render(boardManager, gameManager, boardString);
+		
 
 		//Ends Clock and handles FPS
 		const auto endTime = steady_clock::now();
-		const auto elapsedMilliseconds = gameManager.getElapsedTime(startTime, endTime);
-		this_thread::sleep_for(milliseconds(gameManager.targetFrameTime-elapsedMilliseconds));
-		
+		/*const auto elapsedMilliseconds = gameManager.getElapsedTime(startTime, endTime);
+		this_thread::sleep_for(milliseconds(gameManager.targetFrameTime - elapsedMilliseconds));*/
+		TimeUtils::enforceFrameRate(startTime, endTime);
+		if (boardManager.gameboard[boardManager.pieceStartingCoords.Y][boardManager.pieceStartingCoords.X] == boardManager.staticPiece) {
+			gameManager.running = false;
+		}
 	}
+	system("cls");
+};
+
+static bool startScreen() {
+
+	cout << R"(
+		  ______                       __  __        ________           __                __           
+		 /      \                     /  |/  |      /        |         /  |              /  |          
+		/$$$$$$  |  _______   _______ $$/ $$/       $$$$$$$$/______   _$$ |_     ______  $$/   _______ 
+		$$ |__$$ | /       | /       |/  |/  |         $$ | /      \ / $$   |   /      \ /  | /       |
+		$$    $$ |/$$$$$$$/ /$$$$$$$/ $$ |$$ |         $$ |/$$$$$$  |$$$$$$/   /$$$$$$  |$$ |/$$$$$$$/ 
+		$$$$$$$$ |$$      \ $$ |      $$ |$$ |         $$ |$$    $$ |  $$ | __ $$ |  $$/ $$ |$$      \     
+		$$ |  $$ | $$$$$$  |$$ \_____ $$ |$$ |         $$ |$$$$$$$$/   $$ |/  |$$ |      $$ | $$$$$$  |
+		$$ |  $$ |/     $$/ $$       |$$ |$$ |         $$ |$$       |  $$  $$/ $$ |      $$ |/     $$/ 
+		$$/   $$/ $$$$$$$/   $$$$$$$/ $$/ $$/          $$/  $$$$$$$/    $$$$/  $$/       $$/ $$$$$$$/  
+
+
+					     do you want to play? [y/n])";
+	char start;
+	cin >> start;
+	if (start == 'y') {
+		system("cls");
+		start = ' ';
+		return true;
+	}
+	else {
+		return false;
+	};
 }
+
+
+int main() {
+	while (startScreen()) {
+		startGame();
+	}
+	//startGame();
+}
+

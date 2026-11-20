@@ -124,6 +124,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Ascii-Tetris.cpp" />
+    <ClCompile Include="GameManager.cpp" />
+    <ClCompile Include="TimeUtils.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="GameManager.h" />
+    <ClInclude Include="TimeUtils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
