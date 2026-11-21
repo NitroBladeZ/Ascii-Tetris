@@ -4,7 +4,7 @@
 using namespace std;
 
 
-auto getElapsedTime(steady_clock::time_point startTime, steady_clock::time_point endTime) {
+auto TimeUtils::getElapsedTime(steady_clock::time_point startTime, steady_clock::time_point endTime) {
 	return duration_cast<milliseconds>(endTime - startTime).count();
 }
 
@@ -12,3 +12,4 @@ void TimeUtils::enforceFrameRate(steady_clock::time_point startTime, steady_cloc
 	const auto elapsedMilliseconds = getElapsedTime(startTime, endTime);
 	this_thread::sleep_for(milliseconds(targetFrameTime - elapsedMilliseconds));
 }
+

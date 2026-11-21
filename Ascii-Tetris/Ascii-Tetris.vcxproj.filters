@@ -19,6 +19,15 @@
     <Filter Include="Source Files\Utils">
       <UniqueIdentifier>{99703d17-3f91-443e-9a8d-8b90ef4536c8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Input">
+      <UniqueIdentifier>{34b1d248-87e5-4172-8b02-f9bcd0113a95}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Renderer">
+      <UniqueIdentifier>{80eb50ed-142c-42b4-81ec-7e443ba9732b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\BoardManager">
+      <UniqueIdentifier>{bceb59a3-353a-4a6e-a4a6-ce54f1c92100}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Ascii-Tetris.cpp">
@@ -30,13 +39,40 @@
     <ClCompile Include="TimeUtils.cpp">
       <Filter>Source Files\Utils</Filter>
     </ClCompile>
+    <ClCompile Include="InputHandler.cpp">
+      <Filter>Source Files\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer.cpp">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="BoardManager.cpp">
+      <Filter>Source Files\BoardManager</Filter>
+    </ClCompile>
+    <ClCompile Include="ConsoleUtils.cpp">
+      <Filter>Source Files\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GameManager.h">
-      <Filter>Source Files\GameManager</Filter>
-    </ClInclude>
     <ClInclude Include="TimeUtils.h">
       <Filter>Source Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="InputHandler.h">
+      <Filter>Source Files\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer.h">
+      <Filter>Source Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="BoardManager.h">
+      <Filter>Source Files\BoardManager</Filter>
+    </ClInclude>
+    <ClInclude Include="ConsoleUtils.h">
+      <Filter>Source Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="GameManager.h">
+      <Filter>Source Files\GameManager</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

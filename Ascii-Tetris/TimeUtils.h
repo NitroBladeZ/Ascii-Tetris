@@ -10,7 +10,7 @@ private:
 	static const int targetFrameTime = 1000 / targetFPS; // in milliseconds
 
 public:
-
+	static auto getElapsedTime(steady_clock::time_point startTime, steady_clock::time_point endTime);
 	static void enforceFrameRate(steady_clock::time_point startTime, steady_clock::time_point endTime);
 
 };

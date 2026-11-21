@@ -124,11 +124,20 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Ascii-Tetris.cpp" />
+    <ClCompile Include="BoardManager.cpp" />
+    <ClCompile Include="ConsoleUtils.cpp" />
     <ClCompile Include="GameManager.cpp" />
+    <ClCompile Include="InputHandler.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="TimeUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BoardManager.h" />
+    <ClInclude Include="ConsoleUtils.h" />
     <ClInclude Include="GameManager.h" />
+    <ClInclude Include="InputHandler.h" />
+    <ClInclude Include="Renderer.h" />
     <ClInclude Include="TimeUtils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
